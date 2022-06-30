@@ -37,7 +37,7 @@ SELENIUM_DRIVER_EXECUTABLE_PATH = os.path.abspath(
     os.path.join(os.path.dirname(os.path.abspath(__file__)),
                  f'../../scrapper/chromedriver.{platform.system().lower()}'))
 
-SELENIUM_DRIVER_ARGUMENTS = ['--headless', '--no-startup-window', '--disable-gpu']
+SELENIUM_DRIVER_ARGUMENTS = ['--headless', '--no-startup-window']
 if os.getuid() == 0:
     SELENIUM_DRIVER_ARGUMENTS.append('--no-sandbox')
 elif os.environ.get('NO_SANDBOX'):
