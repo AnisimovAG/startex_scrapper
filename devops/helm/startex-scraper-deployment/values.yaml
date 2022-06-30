@@ -1,0 +1,15 @@
+
+replicaCount: 1
+
+nameOverride: scraper-deployment
+
+projectName: scraper
+
+fullnameOverride: startex-scraper-deployment
+
+image:
+  repository: hive.star-tex.ru/startex-scraper
+#  repository: docker.webandpeople.com/scraper
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: 101
