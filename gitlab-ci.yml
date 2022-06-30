@@ -1,0 +1,63 @@
+---
+variables:
+  REGISTRY: hive.star-tex.ru
+  APP: startex
+  ROCKER: /usr/local/bin/rocker
+  DOCKER: docker
+  TEST: test1.star-tex.ru
+  TEST2: test2.star-tex.ru
+  PRODUCTION: mysql2.star-tex.ru
+  PRODUCTION_URL: star-tex.ru
+  TEST_URL: test.star-tex.ru
+  GITLAB_API_URL: "https://gitlab.star-tex.ru/api/v3"
+  GITLAB_ACCESS_TOKEN: EuYAXuKjiGDScyr1vRGN
+  SANDBOX_TRIGGER_TOKEN: 16ee8ba5d49f80b75b7abc6305fcac
+  NPM: npm
+  WEBPACK: node --max_old_space_size=4096 ./node_modules/webpack/bin/webpack.js
+  TARGET_NODE: SOME_IP
+  WEBAPP: webapp
+  PRODUCTION_SERVICE_NAME: star-tex
+  KUBECONFIG: build/k8s/.kubeconfig
+  EXTRA_ARGS: ""
+stages:
+  - make_docker
+  - deploy_to_prod
+
+Building-scraper-Server:
+  stage: make_docker
+  tags:
+    - docker
+    - shell
+  only:
+    - master
+  when: manual
+  script:
+    - export
+    - echo "$CI_BUILD_ID" > build_id
+    # build image
+    - $DOCKER build -t $REGISTRY/$APP-scraper:$CI_PIPELINE_ID --build-arg user=1000 --build-arg uid=1000 .
+    # push to registry
+    - $DOCKER tag $REGISTRY/$APP-scraper:$CI_PIPELINE_ID $REGISTRY/$APP-scraper:latest
+    - $DOCKER push $REGISTRY/$APP-scraper:$CI_PIPELINE_ID
+    - $DOCKER push $REGISTRY/$APP-scraper:latest
+    - $DOCKER rmi $REGISTRY/$APP-scraper:latest
+    - $DOCKER rmi $REGISTRY/$APP-scraper:$CI_PIPELINE_ID
+
+
+deploy_scraper_cronjob:
+  stage: deploy_to_prod
+  only:
+    - deploy
+  tags:
+    - docker
+    - shell
+  script:
+    - export
+    - export KUBECONFIG=../../credentials/startex-cluster.yml
+    - cd devops/helm/startex-scraper-cronjob/
+    - helm -n star-tex list
+    - helm -n star-tex upgrade --install --set image_id=$CI_PIPELINE_ID startex-scraper .
+  when: manual
+
+
+

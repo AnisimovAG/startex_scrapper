@@ -1,9 +1,12 @@
 FROM python:3.8
 
+ARG user
+ARG uid
+
 ENV DEBIAN_FRONTEND=noninteractive
 
 # trying to use minimum RUN commands
-RUN apt-get install
+#RUN apt-get install
 # installing google chrome with chinese fonts
 RUN apt-get update && apt-get install -y apt-utils curl fonts-liberation xdg-utils postgresql wget gnupg \
     && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
@@ -13,23 +16,27 @@ RUN apt-get update && apt-get install -y apt-utils curl fonts-liberation xdg-uti
       --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip3 install --upgrade pip
+
 
 WORKDIR /opt/scrapper/
-COPY . /opt/scrapper/
-
-RUN pip3 install -r /opt/scrapper/requirements.txt
+COPY ./ /opt/scrapper/
 
 
-RUN chmod +x scrapper/chromedriver.linux \
-    && scrapper/chromedriver.linux -v \
-    && google-chrome --version
+RUN mkdir /home/$user && useradd -G root -u $uid -d /home/$user $user && \
+    chown -R $user:$user /home/$user && \
+    chown -R $user:$user /opt/scrapper/ && \
+    touch /var/log/startex-scrapper-alibaba.log && \
+    chown -R $user:$user /var/log/startex-scrapper-alibaba.log
+
+
+
+USER $user
+ENV PATH="/home/$user/.local/bin:${PATH}"
+ENV NO_SANDBOX="1"
+
+RUN pip3 install --upgrade pip && pip3 install -r /opt/scrapper/requirements.txt
+    && \ chmod +x scrapper/chromedriver.linux
+    && \ scrapper/chromedriver.linux -v
+    && \ google-chrome --version
 
 EXPOSE 80
-
-# if you want to make container permanent
-#ENTRYPOINT ["tail", "-f", "/dev/null"]
-# or run a sample command
-#CMD ["/bin/bash","start-alibaba.sh"]
-
-

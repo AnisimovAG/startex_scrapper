@@ -1,0 +1,22 @@
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+image_id: latest
+jobs:
+  - name: startex-scraper-alibaba-cronjob
+    image:
+      repository: hive.star-tex.ru/startex-scraper
+      tag: latest
+      imagePullPolicy: Always
+    # running at 5:31 every day
+    schedule: "31 5 * * *"
+    command:
+      - /bin/sh
+      - -c
+      - |
+        export PYTHONPATH="$PYTHONPATH:/opt/scraper/"
+        cd /opt/scraper/alibaba
+        scrapy crawl alibaba
+    failedJobsHistoryLimit: 3
+    successfulJobsHistoryLimit: 3
+    concurrencyPolicy: Forbid
+    restartPolicy: Never

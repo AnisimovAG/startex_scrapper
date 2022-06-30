@@ -1,0 +1,7 @@
+apiVersion: v1
+name: scraper-cronjobs
+description: scrape marketplaces once a day
+version: 1.0.0
+keywords:
+  - cron
+appVersion: "1.16.0"
