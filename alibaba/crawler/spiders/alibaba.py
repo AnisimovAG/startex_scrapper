@@ -246,7 +246,13 @@ class AlibabaCrawlerSpider(scrapy.Spider):
         if data['products']:
             for product in data['products']:
                 if product['link']:  # Может быть реклама, там линка нет
-                    yield SeleniumRequest(url=get_clean_link(product['link']), callback=self.parse_product_details)
+                    yield SeleniumRequest(
+                        url=get_clean_link(product['link']),
+                        callback=self.parse_product_details,
+                        wait_time=3,
+                        wait_until=EC.invisibility_of_element_located(
+                            (By.XPATH, './/div[@class="ui-fastfb-loading"]'))
+                    )
 
             # Try paginating if there is data
             self.page += 1
