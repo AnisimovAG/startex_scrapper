@@ -1,0 +1,104 @@
+name:
+    css: h1.module-pdp-title
+    xpath: null
+    type: Text
+id:
+    css: 'div[id="detail-favorite-mark"]::attr("data-fav-id")'
+    xpath: null
+    type: HTML
+prices:
+    css: null
+    xpath: './/div[@id="module_price"]'
+    type: HTML
+min_order_txt:
+    css: 'div[class="item-tips"]'
+    xpath: null
+    type: Text
+colors:
+    css: null
+    xpath: >-
+        .//div[@id="module_sku"]//dd[@class="sku-attr-val value util-clearfix"]/*[@data-role="sku-attr-val"] |
+        .//div[@id="module_sku"]//div[@class="sku-item" and ./label/text()="Цвет"]/div[contains(@class, "item-size")]/a |
+        .//div[@id="module_sku"]//div[@class="sku-item" and ./label/text()="Color"]/div[contains(@class, "item-size")]/a
+    multiple: true
+    type: HTML
+video:
+    css: null
+    xpath: './/div[@class="bc-video-player"]/video/@src'
+    format: VideoLink
+    type: HTML
+photos:
+    css: null
+    xpath: './/li[contains(@class, "main-image-thumb-item")]/img/@src'
+    multiple: true
+    format: PhotoLink
+    type: HTML
+production:
+    css: null
+    xpath: './/div[@id="module_market_action"]//table[contains(@class, "supply-ability-table")]'
+    type: HTML
+    children:
+        thresholds:
+            css: null
+            xpath: './tbody/tr[1]/td'
+            multiple: true
+            type: Text
+        days:
+            css: null
+            xpath: './tbody/tr[2]/td'
+            multiple: true
+            type: Text
+supplier_url:
+    css: null
+    xpath: './/a[@class="company-name company-name-lite-vb"]/@href'
+    type: HTML
+supplier_name:
+    css: null
+    xpath: './/a[@class="company-name company-name-lite-vb"]/@title'
+    type: HTML
+product_description1:
+    css: null
+    xpath: './/div[@id="detail_decorate_root"]'
+    type: HTML
+specification1:
+    css: null
+    xpath: './/div[@id="detail_decorate_root"]//div[@class="ife-detail-decorate-table"]/table[1]/tbody/tr'
+    multiple: true
+    type: HTML
+    children:
+        name:
+            css: null
+            xpath: './td[1]/div'
+            type: Text
+        value:
+            css: null
+            xpath: './td[2]/div'
+            type: Text
+product_description2:
+    css: null
+    xpath: './/div[@id="module_product_specification"]'
+    type: HTML
+specification2:
+    css: null
+    xpath: './/div[@id="module_product_specification"]//table[1]/tbody/tr'
+    multiple: true
+    type: HTML
+    children:
+        name:
+            css: null
+            xpath: './td[1]'
+            type: Text
+        value:
+            css: null
+            xpath: './td[2]'
+            type: Text
+category:
+    css: null
+    xpath: './/div[@class="detail-subscribe"]/ol'
+    type: HTML
+    children:
+        hierarchy:
+            css: null
+            xpath: './li/a/span'
+            type: Text
+            multiple: true

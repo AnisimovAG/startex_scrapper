@@ -1,0 +1,11 @@
+specification_keys:
+  css: null
+  xpath: './/div[@class="basic-info-list"]//div[@class="bac-item-label fl"]'
+  multiple: true
+  type: Text
+property_keys:
+  css: null
+  xpath: './/div[@class="sr-proMainInfo-baseInfo-propertyAttr"]/table[1]/tbody/tr/th'
+  multiple: true
+  format: StripColon
+  type: Text

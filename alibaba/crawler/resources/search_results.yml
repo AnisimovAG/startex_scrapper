@@ -1,0 +1,10 @@
+products:
+    css: 'div[data-content="productItem"]'
+    xpath: null
+    multiple: true
+    type: Text
+    children:
+        link:
+            css: a.list-no-v2-left__img-container
+            xpath: null
+            type: Link

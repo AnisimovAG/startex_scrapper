@@ -1,0 +1,27 @@
+
+version: "3"
+
+services:
+  scrapper:
+    build:
+      args:
+        user: ${USER}
+        uid: ${USERID}
+      context: ./
+      dockerfile: dev.Dockerfile
+    restart: always
+    hostname: scrapper
+    container_name: scrapper
+    volumes:
+      - ./:/opt/scrapper/
+    command:
+      - tail
+      - -f
+      - /dev/null
+    networks:
+      default:
+    cap_add:
+      - NET_ADMIN
+    environment:
+      NO_SANDBOX: ${NO_SANDBOX}
+

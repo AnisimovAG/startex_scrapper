@@ -1,0 +1,8 @@
+price:
+  css: null
+  xpath: './/span[@class="ma-ref-price"]/span'
+  type: Text
+threshold:
+  css: null
+  xpath: './/span[@class="ma-min-order"]'
+  type: Text

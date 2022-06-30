@@ -1,0 +1,15 @@
+prices:
+  css: null
+  xpath: './/li'
+  multiple: true
+  type: Text
+  children:
+    price:
+      css: null
+      xpath: './/span[@class="pre-inquiry-price"]'
+      type: Text
+      format: Price
+    threshold:
+      css: null
+      xpath: './/span[@class="ma-quantity-range"]'
+      type: Text

@@ -1,0 +1,126 @@
+name:
+    css: null
+    xpath: './/div[@class="sr-proMainInfo-baseInfo-name" or @class="pro-name"]/h1'
+    type: Text
+    format: Name
+id:
+    css: null
+    xpath: './/input[@id="productId"]/@value'
+    type: HTML
+prices_thresholds:
+    css: null
+    xpath: >-
+        .//div[@class="swiper-proMainInfo-baseInfo-propertyGetPrice-container"] |
+        .//div[@class="price-box"] |
+        .//div[@class="base-info"]//div[@class="property"]
+    type: HTML
+    children:
+        prices_div:
+            css: null
+            xpath: >- 
+                .//div[@id="swiper-container"]/div//div[@class="swiper-money-container"] |
+                ./div[@class="style-horizontal item-num-2"]/table/tbody/tr[./th[contains(text(), "FOB")]]/td//span[contains(@class, "price-item")]
+            type: Text
+            multiple: true
+            format: Price
+        thresholds:
+            css: null
+            xpath: >-
+                .//div[@id="swiper-container"]//div[@class="swiper-unit-container"] |
+                .//div[@class="only-one-priceNum"]//table/tbody/tr/td[2][not(span)] |
+                .//div[@class="sr-proMainInfo-baseInfo-propertyPrice"]//table/tbody/tr/td[2]/descendant-or-self::*[1] |
+                ./div[@class="style-horizontal item-num-2"]/table/tbody/tr[./th[contains(text(), "оличество")]]/td//span[contains(@class, "price-item")] |
+                ./table/tbody/tr[./th[contains(text(), "Минимальный Заказ")]]/td
+            multiple: true
+            type: Text
+            format: Threshold
+        thresholds_alt:
+            css: null
+            xpath: './/tr[@class="row-2"]/td/span'
+            multiple: true
+            type: Text
+            format: Threshold
+        prices_table:
+            css: null
+            xpath: >- 
+                .//div[@class="only-one-priceNum"]/table/tbody/tr/td[1]/span[1] | 
+                .//div[@class="sr-proMainInfo-baseInfo-propertyPrice"]//table/tbody/tr/td[1] |
+                .//tr[./th[contains(text(), "rice")]]/td/span//span |
+                .//tr[@class="row-1"]/td//span[contains(text(), '$')]
+            format: OnlyOnePrice
+            type: Text
+category:
+    css: null
+    xpath: >- 
+        .//div[@class="detail-top-bar"]//li[@class="sr-QPWords-item"] |
+        .//div[@class="crumb"]
+    type: HTML
+    children:
+        hierarchy:
+            css: null
+            xpath: './/a'
+            multiple: true
+            type: Text
+video:
+    css: null
+    xpath: './/script[@type="text/data-video"]'
+    format: VideoLink
+    type: Text
+supplier_name:
+    css: null
+    xpath: >- 
+        .//div[@faw-module="company_homepage"]//div[@class="sr-com-info"]//a |
+        .//div[@class="sider-block com-info"]//p[@class="com-name"]/a
+    type: Text
+supplier_url:
+    css: null
+    xpath: >- 
+        .//div[@faw-module="company_homepage"]//div[@class="sr-com-info"]//a/@href |
+        .//div[@class="sider-block com-info"]//p[@class="com-name"]/a/@href
+    type: HTML
+product_images:
+    css: null
+    xpath: >- 
+        .//div[@class="sr-proMainInfo-slide-picInside"]/a/img/@data-original |
+        .//div[@class="gallary-box"]//img/@src
+    format: BigPhotoLink
+    multiple: true
+    type: HTML
+product_images_alt:
+    css: null
+    xpath: './/div[@class="sr-proMainInfo-slide-picInside"]/a/img/@src'
+    format: BigPhotoLink
+    multiple: true
+    type: HTML
+other_images:
+    css: null
+    xpath: './/div[@class="rich-text cf"]//img/@data-original'
+    format: AddProtocolHTTPS
+    multiple: true
+    type: HTML
+url_english:
+    css: null
+    xpath: './/li[@class="m-header-option"]/a[text()="English"]/@href'
+    type: HTML
+specification_values:
+    css: null
+    xpath: './/div[@class="basic-info-list"]//div[@class="bac-item-value fl"]'
+    multiple: true
+    type: Text
+property_values:
+    css: null
+    xpath: './/div[@class="sr-proMainInfo-baseInfo-propertyAttr"]/table[1]/tbody/tr/td'
+    multiple: true
+    type: Text
+unit:
+    css: null
+    xpath: >-
+        .//tr[@class="row-1"]/td |
+        .//div[@class="base-info"]//div[@class="property"]/table/tbody/tr[./th[contains(text(), "Минимальный Заказ")]]/td
+    type: Text
+    format: Unit
+supplier_last_activity:
+    css: null
+    xpath: './/div[@class="other com-other-info"]/p[./span[contains(text(), "Дата Последнего Входа:")]]'
+    type: Text
+    format: LastActivityDate

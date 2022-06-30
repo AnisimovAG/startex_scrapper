@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+{% block content %}
+    <h1>Парсер {{ spider }}</h1>
+    <h4>Завершился в {{ end_date }} и {{ update_status }}обновил следующие товары:</h4>
+    <table border="1">
+        <thead>
+            <tr>
+                <th scope="col">id</th>
+                <th scope="col">url</th>
+                <th scope="col">Поле</th>
+                <th scope="col">Старое значение</th>
+                <th scope="col">Новое значение</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for record in records %}
+            <tr>
+                <td rowspan="{{ record.diff | length }}">{{ record.id }}</td>
+                <td rowspan="{{ record.diff | length }}">{{ record.url }}</td>
+                {% for key, value in record.diff.items %}
+                    <td>{{ key }}</td>
+                    <td>{{ value.old }}</td>
+                    <td>{{ value.new }}</td>
+                    </tr>
+                    <tr>
+                {% endfor %}
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
+</body>
+</html>

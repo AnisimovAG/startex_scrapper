@@ -1,0 +1,12 @@
+name:
+    css: null
+    xpath: './/span[@class="color"]/@title'
+    type: HTML
+photo_name:
+    css: null
+    xpath: '//img/@title'
+    type: HTML
+photo:
+    css: null
+    xpath: '//img/@src'
+    type: HTML

@@ -1,0 +1,20 @@
+products:
+    css: null
+    xpath: './/div[@faw-module="Search_prod_list"]'
+    type: HTML
+    multiple: true
+    children:
+        link:
+            css: null
+            xpath: './/h2[@class="product-name"]/a/@href'
+            type: HTML
+        moq_unit:
+            css: null
+            xpath: './/div[@class="product-property"]/span[./strong[not(@class="price")]]'
+            format: MoqUnit
+            type: Text
+next_page:
+    css: null
+    xpath: './/div[@class="search-list"]//div[@class="pager-box cf"]/a[2]/@href'
+    type: HTML
+
