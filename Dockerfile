@@ -34,9 +34,9 @@ USER $user
 ENV PATH="/home/$user/.local/bin:${PATH}"
 ENV NO_SANDBOX="1"
 
-RUN pip3 install --upgrade pip && pip3 install -r /opt/scrapper/requirements.txt
-    && \ chmod +x scrapper/chromedriver.linux
-    && \ scrapper/chromedriver.linux -v
-    && \ google-chrome --version
+RUN pip3 install --upgrade pip && pip3 install -r /opt/scrapper/requirements.txt \
+    && chmod +x scrapper/chromedriver.linux \
+    && scrapper/chromedriver.linux -v \
+    &&  google-chrome --version
 
 EXPOSE 80
