@@ -2,8 +2,16 @@
 scraper models don't manage tables in database. This is the task of site models. It is necessary to synchronize the site and scraper models when they change
 
 ## docker usage
-```
+```shell
 cp .env.sample to .env
+```
+add develop_settings or local_settings if needed (aka. db connection, find settings sample in ./scraper/settings.py)
+```shell
+touch ./env/develop_settings.py
+```
+
+
+```shell
 chmod +x scraper/chromedriver.linux
 docker compose up --build
 ```
