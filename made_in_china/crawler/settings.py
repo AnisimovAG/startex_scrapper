@@ -11,12 +11,12 @@ import sys
 import django
 
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".."))
-os.environ['DJANGO_SETTINGS_MODULE'] = 'scrapper.settings'
+os.environ['DJANGO_SETTINGS_MODULE'] = 'scraper.settings'
 
 django.setup()
 
 LOG_LEVEL = 'INFO'
-LOG_FILE = '/var/log/startex-scrapper-made-in-china.log'
+LOG_FILE = '/var/log/startex-scraper-made-in-china.log'
 BOT_NAME = 'made_in_china'
 
 SPIDER_MODULES = ['made_in_china.crawler.spiders']
@@ -24,7 +24,7 @@ NEWSPIDER_MODULE = 'made_in_china.crawler.spiders'
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-USER_AGENT = 'scrapper (+http://www.startex.com)'
+USER_AGENT = 'scraper (+http://www.startex.com)'
 
 # Obey robots.txt rules
 #ROBOTSTXT_OBEY = True

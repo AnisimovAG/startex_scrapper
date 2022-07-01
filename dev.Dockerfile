@@ -18,15 +18,15 @@ RUN apt-get update && apt-get install -y apt-utils curl fonts-liberation xdg-uti
 
 RUN pip3 install --upgrade pip
 
-WORKDIR /opt/scrapper/
-COPY ./requirements.txt /opt/scrapper/requirements.txt
-COPY ./scrapper/chromedriver.linux /opt/scrapper/scrapper/chromedriver.linux
+WORKDIR /opt/scraper/
+COPY ./requirements.txt /opt/scraper/requirements.txt
+COPY ./scraper/chromedriver.linux /opt/scraper/scraper/chromedriver.linux
 
 RUN mkdir /home/$user && useradd -G root -u $uid -d /home/$user $user && \
     chown -R $user:$user /home/$user && \
-    chown -R $user:$user /opt/scrapper/ && \
-    touch /var/log/startex-scrapper-alibaba.log && \
-    chown -R $user:$user /var/log/startex-scrapper-alibaba.log
+    chown -R $user:$user /opt/scraper/ && \
+    touch /var/log/startex-scraper-alibaba.log && \
+    chown -R $user:$user /var/log/startex-scraper-alibaba.log
 
 
 
@@ -35,10 +35,10 @@ USER $user
 
 ENV PATH="/home/$user/.local/bin:${PATH}"
 
-RUN pip3 install -r /opt/scrapper/requirements.txt
+RUN pip3 install -r /opt/scraper/requirements.txt
 
-RUN chmod +x scrapper/chromedriver.linux \
-    && scrapper/chromedriver.linux -v \
+RUN chmod +x scraper/chromedriver.linux \
+    && scraper/chromedriver.linux -v \
     && google-chrome --version
 
 EXPOSE 80

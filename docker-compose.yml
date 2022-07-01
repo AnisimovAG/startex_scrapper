@@ -2,7 +2,7 @@
 version: "3"
 
 services:
-  scrapper:
+  scraper:
     build:
       args:
         user: ${USER}
@@ -10,10 +10,10 @@ services:
       context: ./
       dockerfile: dev.Dockerfile
     restart: always
-    hostname: scrapper
-    container_name: scrapper
+    hostname: scraper
+    container_name: scraper
     volumes:
-      - ./:/opt/scrapper/
+      - ./:/opt/scraper/
     command:
       - tail
       - -f

@@ -11,7 +11,7 @@ from pydispatch import dispatcher
 
 from ..models import AlibabaProduct
 from .settings import UPDATE_ITEMS
-from scrapper.utils import send_email
+from scraper.utils import send_email
 
 
 def compare_lists(a, b):

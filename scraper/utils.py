@@ -16,7 +16,7 @@ def send_email(spider_name: str, updated_records: list, update_mode: bool) -> No
     message = EmailMultiAlternatives(
         subject=f'Парсер {spider_name} обнаружил обновление товаров',
         to=EMAIL_TO,
-        from_email='scrapper'
+        from_email='scraper'
     )
     message.attach_alternative(html, 'text/html')
     message.send()

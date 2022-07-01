@@ -18,15 +18,15 @@ RUN apt-get update && apt-get install -y apt-utils curl fonts-liberation xdg-uti
 
 
 
-WORKDIR /opt/scrapper/
-COPY ./ /opt/scrapper/
+WORKDIR /opt/scraper/
+COPY ./ /opt/scraper/
 
 
 RUN mkdir /home/$user && useradd -G root -u $uid -d /home/$user $user && \
     chown -R $user:$user /home/$user && \
-    chown -R $user:$user /opt/scrapper/ && \
-    touch /var/log/startex-scrapper-alibaba.log && \
-    chown -R $user:$user /var/log/startex-scrapper-alibaba.log
+    chown -R $user:$user /opt/scraper/ && \
+    touch /var/log/startex-scraper-alibaba.log && \
+    chown -R $user:$user /var/log/startex-scraper-alibaba.log
 
 
 
@@ -34,9 +34,9 @@ USER $user
 ENV PATH="/home/$user/.local/bin:${PATH}"
 ENV NO_SANDBOX="1"
 
-RUN pip3 install --upgrade pip && pip3 install -r /opt/scrapper/requirements.txt \
-    && chmod +x scrapper/chromedriver.linux \
-    && scrapper/chromedriver.linux -v \
+RUN pip3 install --upgrade pip && pip3 install -r /opt/scraper/requirements.txt \
+    && chmod +x /opt/scraper/scraper/chromedriver.linux \
+    && /opt/scraper/scraper/chromedriver.linux -v \
     &&  google-chrome --version
 
 EXPOSE 80

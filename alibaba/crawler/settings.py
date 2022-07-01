@@ -15,7 +15,7 @@ import sys
 import django
 
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".."))
-os.environ['DJANGO_SETTINGS_MODULE'] = 'scrapper.settings'
+os.environ['DJANGO_SETTINGS_MODULE'] = 'scraper.settings'
 
 django.setup()
 
@@ -24,7 +24,7 @@ UPDATE_ITEMS = True
 BOT_NAME = 'alibaba'
 
 LOG_LEVEL = 'INFO'
-LOG_FILE = '/var/log/startex-scrapper-alibaba.log'
+LOG_FILE = '/var/log/startex-scraper-alibaba.log'
 
 SPIDER_MODULES = ['alibaba.crawler.spiders']
 NEWSPIDER_MODULE = 'alibaba.crawler.spiders'
@@ -35,7 +35,7 @@ DOWNLOADER_MIDDLEWARES = {
 SELENIUM_DRIVER_NAME = 'chrome'
 SELENIUM_DRIVER_EXECUTABLE_PATH = os.path.abspath(
     os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                 f'../../scrapper/chromedriver.{platform.system().lower()}'))
+                 f'../../scraper/chromedriver.{platform.system().lower()}'))
 
 SELENIUM_DRIVER_ARGUMENTS = [
     '--headless',

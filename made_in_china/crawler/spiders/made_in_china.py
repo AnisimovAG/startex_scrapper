@@ -9,7 +9,7 @@ import os
 from html import unescape
 from selectorlib import Extractor, Formatter
 
-from scrapper.base import truncate_table
+from scraper.base import truncate_table
 from ...models import MadeInChinaCategory
 import re
 import logging
