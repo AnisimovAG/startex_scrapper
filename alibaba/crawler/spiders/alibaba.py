@@ -11,7 +11,6 @@ from selenium.webdriver.common.by import By
 import os
 from selectorlib import Extractor, Formatter
 
-from scrapper.base import truncate_table
 import re
 import logging
 from transliterate.decorators import transliterate_function
@@ -248,11 +247,7 @@ class AlibabaCrawlerSpider(scrapy.Spider):
                 if product['link']:  # Может быть реклама, там линка нет
                     yield SeleniumRequest(
                         url=get_clean_link(product['link']),
-                        callback=self.parse_product_details,
-                        wait_time=3,
-                        wait_until=EC.invisibility_of_element_located(
-                            (By.XPATH, './/div[@class="ui-fastfb-loading"]'))
-                    )
+                        callback=self.parse_product_details)
 
             # Try paginating if there is data
             self.page += 1

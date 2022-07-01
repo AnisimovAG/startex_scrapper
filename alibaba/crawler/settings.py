@@ -37,7 +37,12 @@ SELENIUM_DRIVER_EXECUTABLE_PATH = os.path.abspath(
     os.path.join(os.path.dirname(os.path.abspath(__file__)),
                  f'../../scrapper/chromedriver.{platform.system().lower()}'))
 
-SELENIUM_DRIVER_ARGUMENTS = ['--headless', '--no-startup-window']
+SELENIUM_DRIVER_ARGUMENTS = [
+    '--headless',
+    '--no-startup-window',
+    '--disable-gpu',
+    'user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36'
+]
 if os.getuid() == 0:
     SELENIUM_DRIVER_ARGUMENTS.append('--no-sandbox')
 elif os.environ.get('NO_SANDBOX'):
@@ -50,14 +55,14 @@ elif os.environ.get('NO_SANDBOX'):
 # ROBOTSTXT_OBEY = True
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
-CONCURRENT_REQUESTS = 64
+CONCURRENT_REQUESTS = 32
 
 # Configure a delay for requests for the same website (default: 0)
 # See https://docs.scrapy.org/en/latest/topics/settings.html#download-delay
 # See also autothrottle settings and docs
-# DOWNLOAD_DELAY = 0
+DOWNLOAD_DELAY = 1
 # The download delay setting will honor only one of:
-# CONCURRENT_REQUESTS_PER_DOMAIN = 16
+CONCURRENT_REQUESTS_PER_DOMAIN = 16
 # CONCURRENT_REQUESTS_PER_IP = 16
 
 # Disable cookies (enabled by default)
