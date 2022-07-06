@@ -111,7 +111,6 @@ class AlibabaCrawlerSpider(scrapy.Spider):
             url=url,
             callback=self.parse_list,
             scroll_page=True,
-            errback=self.error_handler,
             wait_for={
                 'selectorOrFunctionOrTimeout': '//i[contains(@class, "ui2-icon-loading")]',
                 'options': {'hidden': True}
