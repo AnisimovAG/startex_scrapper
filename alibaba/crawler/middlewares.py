@@ -11,7 +11,7 @@ from scrapy import signals
 from scrapy.downloadermiddlewares.retry import RetryMiddleware
 from scrapy.http import HtmlResponse
 from scrapy_puppeteer import PuppeteerMiddleware
-from pyppeteer.errors import TimeoutError as PyppeteerTimeoutError
+from pyppeteer.errors import NetworkError, TimeoutError as PyppeteerTimeoutError
 
 from alibaba.models import AlibabaProduct
 from .settings import MAX_ATTEMPTS
@@ -19,7 +19,7 @@ from .settings import MAX_ATTEMPTS
 
 class AlibabaRetryMiddleware(RetryMiddleware):
     def process_exception(self, request, exception, spider):
-        if isinstance(exception, PyppeteerTimeoutError) and request.attempt <= MAX_ATTEMPTS:
+        if isinstance(exception, (PyppeteerTimeoutError, NetworkError)) and request.attempt <= MAX_ATTEMPTS:
             request.attempt += 1
             return self._retry(request, exception, spider)
 
