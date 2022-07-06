@@ -8,10 +8,20 @@ import asyncio
 
 from pyppeteer import launch
 from scrapy import signals
+from scrapy.downloadermiddlewares.retry import RetryMiddleware
 from scrapy.http import HtmlResponse
 from scrapy_puppeteer import PuppeteerMiddleware
+from pyppeteer.errors import TimeoutError as PyppeteerTimeoutError
 
 from alibaba.models import AlibabaProduct
+from .settings import MAX_ATTEMPTS
+
+
+class AlibabaRetryMiddleware(RetryMiddleware):
+    def process_exception(self, request, exception, spider):
+        if isinstance(exception, PyppeteerTimeoutError) and request.attempt <= MAX_ATTEMPTS:
+            request.attempt += 1
+            return self._retry(request, exception, spider)
 
 
 class AlibabaPuppeteerMiddleware(PuppeteerMiddleware):
@@ -58,11 +68,9 @@ class AlibabaPuppeteerMiddleware(PuppeteerMiddleware):
 
         if request.scroll_page:
             await page.evaluate("""{window.scrollBy(0, document.body.scrollHeight);}""")
-            content1 = await page.content()
 
         if request.wait_for:
             await page.waitFor(**request.wait_for)
-            content2 = await page.content()
 
         if request.screenshot:
             request.meta['screenshot'] = await page.screenshot()

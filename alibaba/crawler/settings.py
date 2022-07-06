@@ -10,7 +10,6 @@
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
 import os
-import platform
 import sys
 import django
 
@@ -20,6 +19,7 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'scraper.settings'
 django.setup()
 
 NEED_SECOND_PASS = True
+MAX_ATTEMPTS = 3
 UPDATE_ITEMS = True
 BOT_NAME = 'alibaba'
 
@@ -31,7 +31,9 @@ NEWSPIDER_MODULE = 'alibaba.crawler.spiders'
 
 TWISTED_REACTOR = 'twisted.internet.asyncioreactor.AsyncioSelectorReactor'
 DOWNLOADER_MIDDLEWARES = {
-    'alibaba.crawler.middlewares.AlibabaPuppeteerMiddleware': 800
+    'alibaba.crawler.middlewares.AlibabaPuppeteerMiddleware': 800,
+    'alibaba.crawler.middlewares.AlibabaRetryMiddleware': 550,
+    'scrapy.downloadermiddlewares.retry.RetryMiddleware': None,
 }
 BROWSER_ARGS = [
     '--disable-gpu',
@@ -42,7 +44,7 @@ BROWSER_ARGS = [
     '--no-zygote',
     '--deterministic-fetch',
     '--disable-features=IsolateOrigins',
-    '--disable-site-isolation-trials',
+    '--disable-site-isolation-trials'
 ]
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
@@ -52,14 +54,14 @@ BROWSER_ARGS = [
 # ROBOTSTXT_OBEY = True
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
-CONCURRENT_REQUESTS = 2
+CONCURRENT_REQUESTS = 4
 
 # Configure a delay for requests for the same website (default: 0)
 # See https://docs.scrapy.org/en/latest/topics/settings.html#download-delay
 # See also autothrottle settings and docs
 DOWNLOAD_DELAY = 1
 # The download delay setting will honor only one of:
-CONCURRENT_REQUESTS_PER_DOMAIN = 2
+CONCURRENT_REQUESTS_PER_DOMAIN = 4
 # CONCURRENT_REQUESTS_PER_IP = 16
 
 # Disable cookies (enabled by default)

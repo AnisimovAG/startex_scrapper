@@ -6,26 +6,22 @@ from typing import Optional
 import scrapy
 from json import loads
 import requests
-# from scrapypuppeteer import PuppeteerRequest as PuppeteerRequestOther, PuppeteerResponse
 from asgiref.sync import sync_to_async
-from scrapy_puppeteer import PuppeteerRequest
-# from scrapypuppeteer.actions import Scroll, GoTo
 import os
 
-from scrapy_puppeteer.middlewares import as_deferred
 from selectorlib import Extractor, Formatter
 
 import re
 import logging
 from transliterate.decorators import transliterate_function
 
+from pyppeteer.errors import TimeoutError as PyppeteerTimeoutError
 from ..alibaba_puppeteer import AlibabaPuppeteerRequest
 from ..items import AlibabaItem
-from ..settings import NEED_SECOND_PASS
+from ..settings import NEED_SECOND_PASS, MAX_ATTEMPTS
 from ...models import AlibabaProduct
 
-logging.getLogger("selenium").setLevel(logging.WARNING)
-logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("scrapy.core").setLevel(logging.DEBUG)
 
 
 @sync_to_async
@@ -108,12 +104,14 @@ class AlibabaCrawlerSpider(scrapy.Spider):
 
     def start_requests(self):
 
+        # pydevd_pycharm.settrace('127.0.0.1', port=12345, stdoutToServer=True, stderrToServer=True)
         url = "https://russian.alibaba.com/trade/search?spm=a27aq.13929326.IndustryCategory.2.5219393b5O16XC&CateId=100000266&SearchText=%D0%A2%D0%BA%D0%B0%D0%BD%D0%B8&language=ru&indexArea=product_en"
 
         yield AlibabaPuppeteerRequest(
             url=url,
             callback=self.parse_list,
             scroll_page=True,
+            errback=self.error_handler,
             wait_for={
                 'selectorOrFunctionOrTimeout': '//i[contains(@class, "ui2-icon-loading")]',
                 'options': {'hidden': True}
@@ -136,8 +134,7 @@ class AlibabaCrawlerSpider(scrapy.Spider):
             product['name'] = data['name']
             product['url'] = response.url
             product['product_description_html'] = data['product_description1'] if data['product_description1'] else \
-            data[
-                'product_description2']
+                data['product_description2']
             product['photos'] = data['photos']
             product['video'] = data['video']
             product['supplier_name'] = data['supplier_name']
@@ -258,7 +255,10 @@ class AlibabaCrawlerSpider(scrapy.Spider):
                     yield AlibabaPuppeteerRequest(
                         url=get_clean_link(product['link']),
                         callback=self.parse_product_details,
-                        wait_until=['domcontentloaded', 'networkidle0']
+                        wait_until=['domcontentloaded', 'networkidle0'],
+                        wait_for={
+                            'selectorOrFunctionOrTimeout': 5000
+                        }
                     )
 
             # Try paginating if there is data
