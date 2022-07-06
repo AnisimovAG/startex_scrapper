@@ -4,49 +4,81 @@
 #
 # See documentation in:
 # https://docs.scrapy.org/en/latest/topics/spider-middleware.html
+import asyncio
+
+from pyppeteer import launch
+from scrapy import signals
 from scrapy.http import HtmlResponse
-from scrapy_selenium import SeleniumRequest
-from scrapy_selenium.middlewares import SeleniumMiddleware
-from selenium.webdriver.support.wait import WebDriverWait
+from scrapy_puppeteer import PuppeteerMiddleware
+
+from alibaba.models import AlibabaProduct
 
 
-class AlibabaSeleniumMiddleware(SeleniumMiddleware):
-    def process_request(self, request, spider):
-        """Process a request using the selenium driver if applicable"""
+class AlibabaPuppeteerMiddleware(PuppeteerMiddleware):
+    @classmethod
+    async def _from_crawler(cls, crawler):
+        """Start the browser"""
 
-        if not isinstance(request, SeleniumRequest):
-            return None
+        middleware = cls()
+        start_params = {
+            'logLevel': crawler.settings.get('LOG_LEVEL'),
+            'headless': True,
+        }
+        if args := crawler.settings.get('BROWSER_ARGS'):
+            start_params.update({'args': args})
+        middleware.browser = await launch(start_params)
+        crawler.signals.connect(middleware.spider_closed, signals.spider_closed)
 
-        self.driver.get(request.url)
+        return middleware
 
-        for cookie_name, cookie_value in request.cookies.items():
-            self.driver.add_cookie(
-                {
-                    'name': cookie_name,
-                    'value': cookie_value
-                }
-            )
+    @classmethod
+    def from_crawler(cls, crawler):
+        AlibabaProduct.objects.update(not_found=True)
 
-        # why script execute after waiting in stock?
-        if request.script:
-            self.driver.execute_script(request.script)
+        """Initialize the middleware"""
 
-        if request.wait_until:
-            WebDriverWait(self.driver, request.wait_time).until(
-                request.wait_until
-            )
+        loop = asyncio.get_event_loop()
+        middleware = loop.run_until_complete(
+            asyncio.ensure_future(cls._from_crawler(crawler))
+        )
+
+        return middleware
+
+    async def _process_request(self, request, spider):
+        """Handle the request using Puppeteer"""
+
+        page = await self.browser.newPage()
+
+        response = await page.goto(
+            request.url,
+            {
+                'waitUntil': request.wait_until
+            },
+        )
+
+        if request.scroll_page:
+            await page.evaluate("""{window.scrollBy(0, document.body.scrollHeight);}""")
+            content1 = await page.content()
+
+        if request.wait_for:
+            await page.waitFor(**request.wait_for)
+            content2 = await page.content()
 
         if request.screenshot:
-            request.meta['screenshot'] = self.driver.get_screenshot_as_png()
+            request.meta['screenshot'] = await page.screenshot()
 
+        content = await page.content()
+        body = str.encode(content)
+        await page.close()
 
-        body = str.encode(self.driver.page_source)
-
-        # Expose the driver via the "meta" attribute
-        request.meta.update({'driver': self.driver})
+        # Necessary to bypass the compression middleware (?)
+        response.headers.pop('content-encoding', None)
+        response.headers.pop('Content-Encoding', None)
 
         return HtmlResponse(
-            self.driver.current_url,
+            page.url,
+            status=response.status,
+            headers=response.headers,
             body=body,
             encoding='utf-8',
             request=request

@@ -1,25 +1,36 @@
 # -*- coding: utf-8 -*-
+import asyncio
 import sys
 from typing import Optional
 
 import scrapy
 from json import loads
 import requests
-from scrapy_selenium import SeleniumRequest
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
+# from scrapypuppeteer import PuppeteerRequest as PuppeteerRequestOther, PuppeteerResponse
+from asgiref.sync import sync_to_async
+from scrapy_puppeteer import PuppeteerRequest
+# from scrapypuppeteer.actions import Scroll, GoTo
 import os
+
+from scrapy_puppeteer.middlewares import as_deferred
 from selectorlib import Extractor, Formatter
 
 import re
 import logging
 from transliterate.decorators import transliterate_function
+
+from ..alibaba_puppeteer import AlibabaPuppeteerRequest
 from ..items import AlibabaItem
 from ..settings import NEED_SECOND_PASS
 from ...models import AlibabaProduct
 
 logging.getLogger("selenium").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
+
+
+@sync_to_async
+def set_not_found_property():
+    AlibabaProduct.objects.update(not_found=True)
 
 
 def translit_or_none(text: Optional[str]) -> Optional[str]:
@@ -96,25 +107,21 @@ class AlibabaCrawlerSpider(scrapy.Spider):
     max_pages = 0
 
     def start_requests(self):
-        """Read keywords from keywords file amd construct the search URL"""
 
-        AlibabaProduct.objects.update(not_found=True)
         url = "https://russian.alibaba.com/trade/search?spm=a27aq.13929326.IndustryCategory.2.5219393b5O16XC&CateId=100000266&SearchText=%D0%A2%D0%BA%D0%B0%D0%BD%D0%B8&language=ru&indexArea=product_en"
-        # The meta is used to send our search text into the parser as metadata
-        yield SeleniumRequest(url=url,
-                              callback=self.parse,
-                              wait_time=5,
-                              script="window.scrollTo(0, document.body.scrollHeight);",
-                              wait_until=EC.invisibility_of_element_located(
-                                  (By.XPATH, './/i[contains(@class, "ui2-icon-loading")]'))
-                              )
 
-    def second_pass(self):
-        for product in AlibabaProduct.objects.filter(not_found=True):
-            yield SeleniumRequest(url=product.url, callback=self.parse_product_details)
+        yield AlibabaPuppeteerRequest(
+            url=url,
+            callback=self.parse_list,
+            scroll_page=True,
+            wait_for={
+                'selectorOrFunctionOrTimeout': '//i[contains(@class, "ui2-icon-loading")]',
+                'options': {'hidden': True}
+            }
+        )
 
     def parse_product_details(self, response):
-        
+
         if response.status == 200:
             url_english = f'https:{response.text.split("english=")[1].split(",")[0]}'
             data = self.product_extractor.extract(response.text, base_url=response.url)
@@ -123,12 +130,13 @@ class AlibabaCrawlerSpider(scrapy.Spider):
             product['sku'] = data['id']
             product['mpn'] = f'{data["id"]}-00'
             product['brand_name'] = {
-                    '@type': 'Brand',
-                    'name': 'Ali'
-                }
+                '@type': 'Brand',
+                'name': 'Ali'
+            }
             product['name'] = data['name']
             product['url'] = response.url
-            product['product_description_html'] = data['product_description1'] if data['product_description1'] else data[
+            product['product_description_html'] = data['product_description1'] if data['product_description1'] else \
+            data[
                 'product_description2']
             product['photos'] = data['photos']
             product['video'] = data['video']
@@ -140,7 +148,8 @@ class AlibabaCrawlerSpider(scrapy.Spider):
                 if '<li data-role="ladder-price-item"' in data['prices']:
                     prices = self.price_li_extractor.extract(data['prices'])
                     prices_dict = {f'price_{idx + 1}': i['price'] for idx, i in enumerate(prices['prices'])}
-                    prices_dict.update({f'threshold_{idx + 1}': i['threshold'] for idx, i in enumerate(prices['prices'])})
+                    prices_dict.update(
+                        {f'threshold_{idx + 1}': i['threshold'] for idx, i in enumerate(prices['prices'])})
                 else:
                     prices = self.price_cpan_extractor.extract(data['prices'])
                     price2, price1 = Price.get_two_prices(prices['price'])
@@ -192,10 +201,10 @@ class AlibabaCrawlerSpider(scrapy.Spider):
 
             try:
                 if data['production']:
-                    product['production'] = {f'threshold_to_production{idx+1}': i
-                                  for idx, i in enumerate(data['production']['thresholds'][1:])}
+                    product['production'] = {f'threshold_to_production{idx + 1}': i
+                                             for idx, i in enumerate(data['production']['thresholds'][1:])}
                     product['production'].update(
-                        {f'days_to_production{idx+1}': i
+                        {f'days_to_production{idx + 1}': i
                          for idx, i in enumerate(data['production']['days'][1:])}
                     )
                 else:
@@ -208,7 +217,8 @@ class AlibabaCrawlerSpider(scrapy.Spider):
             try:
                 english = {item['attrNameId']: item['attrName'] for item in filter(lambda x: x.get('attrNameId'),
                                                                                    loads(
-                                                                                       requests.get(url_english).text.split(
+                                                                                       requests.get(
+                                                                                           url_english).text.split(
                                                                                            '"productBasicProperties":')[
                                                                                            1].split(']')[0] + ']'))}
             except Exception as error:
@@ -240,14 +250,16 @@ class AlibabaCrawlerSpider(scrapy.Spider):
 
             yield product
 
-    def parse(self, response):
+    async def parse_list(self, response):
         data = self.search_extractor.extract(response.text, base_url=response.url)
         if data['products']:
             for product in data['products']:
                 if product['link']:  # Может быть реклама, там линка нет
-                    yield SeleniumRequest(
+                    yield AlibabaPuppeteerRequest(
                         url=get_clean_link(product['link']),
-                        callback=self.parse_product_details)
+                        callback=self.parse_product_details,
+                        wait_until=['domcontentloaded', 'networkidle0']
+                    )
 
             # Try paginating if there is data
             self.page += 1
@@ -256,14 +268,28 @@ class AlibabaCrawlerSpider(scrapy.Spider):
                     url = f'{response.request.url}&page=2'
                 else:
                     url = re.sub('(^.*?&page\=)(\d+)(.*$)', rf"\g<1>{self.page}\g<3>", response.request.url)
-                yield SeleniumRequest(url=url,
-                                      callback=self.parse,
-                                      wait_time=5,
-                                      script="window.scrollTo(0, document.body.scrollHeight);",
-                                      wait_until=EC.invisibility_of_element_located(
-                                          (By.XPATH, './/i[contains(@class, "ui2-icon-loading")]'))
-                                      )
+
+                yield AlibabaPuppeteerRequest(
+                    url=url,
+                    callback=self.parse_list,
+                    scroll_page=True,
+                    wait_for={
+                        'selectorOrFunctionOrTimeout': '//i[contains(@class, "ui2-icon-loading")]',
+                        'options': {'hidden': True}
+                    }
+                )
         else:
             if NEED_SECOND_PASS:
-                self.second_pass()
+                iterator = AlibabaProduct.objects.filter(not_found=True).iterator()
+                while True:
+                    try:
+                        product = await sync_to_async(next)(iterator)
+                        yield AlibabaPuppeteerRequest(
+                            url=product.url,
+                            callback=self.parse_product_details,
+                            wait_until=['domcontentloaded', 'networkidle2']
+                        )
+                    except StopIteration:
+                        break
+
 

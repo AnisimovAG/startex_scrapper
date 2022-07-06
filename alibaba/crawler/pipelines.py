@@ -12,6 +12,7 @@ from pydispatch import dispatcher
 from ..models import AlibabaProduct
 from .settings import UPDATE_ITEMS
 from scraper.utils import send_email
+from asgiref.sync import sync_to_async
 
 
 def compare_lists(a, b):
@@ -29,11 +30,13 @@ class AlibabaPipeline(object):
     def __init__(self):
         dispatcher.connect(self.spider_closed, signals.spider_closed)
 
-    def process_item(self, item, spider):
+    async def process_item(self, item, spider):
         try:
-            instance = AlibabaProduct.objects.get(pk=item['id'])
+            instance = await sync_to_async(AlibabaProduct.objects.get)(pk=item['id'])
             instance.not_found = False
             updated_fields = {}
+            old_updated_fields = instance.fields_to_update or {}
+            old_fields = old_updated_fields.keys()
             for field in item.keys():
                 old = getattr(instance, field)
                 new = item[field]
@@ -46,7 +49,7 @@ class AlibabaPipeline(object):
                 if updated:
                     updated_fields.update({
                         field: {
-                            'old': old,
+                            'old': old if field not in old_fields else old_updated_fields[field],
                             'new': new
                         }
                     })
@@ -63,14 +66,17 @@ class AlibabaPipeline(object):
                     for field in fields:
                         fields_to_update[field] = updated_fields[field]['old']
                         setattr(instance, field, updated_fields[field]['new'])
-                    instance.fields_to_update = {field: updated_fields[field]['old'] for field in fields}
+                    instance.fields_to_update = {
+                        **old_updated_fields,
+                        **{field: updated_fields[field]['old'] for field in fields}
+                    }
                     fields.append('fields_to_update')
                     fields.append('not_found')
             else:
                 fields = ['not_found']
-            instance.save(update_fields=fields)
+            await sync_to_async(instance.save)(update_fields=fields)
         except AlibabaProduct.DoesNotExist:
-            AlibabaProduct.objects.create(**item)
+            await sync_to_async(AlibabaProduct.objects.create)(**item)
         return item
 
     def spider_closed(self, spider):

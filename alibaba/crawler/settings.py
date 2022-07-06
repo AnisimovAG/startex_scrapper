@@ -29,25 +29,22 @@ LOG_FILE = '/var/log/startex-scraper-alibaba.log'
 SPIDER_MODULES = ['alibaba.crawler.spiders']
 NEWSPIDER_MODULE = 'alibaba.crawler.spiders'
 
+TWISTED_REACTOR = 'twisted.internet.asyncioreactor.AsyncioSelectorReactor'
 DOWNLOADER_MIDDLEWARES = {
-    'alibaba.crawler.middlewares.AlibabaSeleniumMiddleware': 800
+    'alibaba.crawler.middlewares.AlibabaPuppeteerMiddleware': 800
 }
-SELENIUM_DRIVER_NAME = 'chrome'
-SELENIUM_DRIVER_EXECUTABLE_PATH = os.path.abspath(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                 f'../../scraper/chromedriver.{platform.system().lower()}'))
-
-SELENIUM_DRIVER_ARGUMENTS = [
-    '--headless',
-    '--no-startup-window',
+BROWSER_ARGS = [
     '--disable-gpu',
-    'user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36'
+    '--disable-dev-shm-usage',
+    '--disable-setuid-sandbox',
+    '--no-first-run',
+    '--no-sandbox',
+    '--no-zygote',
+    '--deterministic-fetch',
+    '--disable-features=IsolateOrigins',
+    '--disable-site-isolation-trials',
 ]
-if os.getuid() == 0:
-    SELENIUM_DRIVER_ARGUMENTS.append('--no-sandbox')
-elif os.environ.get('NO_SANDBOX'):
-    SELENIUM_DRIVER_ARGUMENTS.append('--no-sandbox')
-    SELENIUM_DRIVER_ARGUMENTS.append('--disable-dev-shm-usage')
+
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 # USER_AGENT = 'alibaba (+http://www.yourdomain.com)'
 
@@ -55,14 +52,14 @@ elif os.environ.get('NO_SANDBOX'):
 # ROBOTSTXT_OBEY = True
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
-CONCURRENT_REQUESTS = 32
+CONCURRENT_REQUESTS = 2
 
 # Configure a delay for requests for the same website (default: 0)
 # See https://docs.scrapy.org/en/latest/topics/settings.html#download-delay
 # See also autothrottle settings and docs
 DOWNLOAD_DELAY = 1
 # The download delay setting will honor only one of:
-CONCURRENT_REQUESTS_PER_DOMAIN = 16
+CONCURRENT_REQUESTS_PER_DOMAIN = 2
 # CONCURRENT_REQUESTS_PER_IP = 16
 
 # Disable cookies (enabled by default)
