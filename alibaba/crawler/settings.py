@@ -44,7 +44,8 @@ BROWSER_ARGS = [
     '--no-zygote',
     '--deterministic-fetch',
     '--disable-features=IsolateOrigins',
-    '--disable-site-isolation-trials'
+    '--disable-site-isolation-trials',
+    '--proxy-server=http://127.0.0.1:3128'
 ]
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
