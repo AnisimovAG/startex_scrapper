@@ -44,9 +44,11 @@ BROWSER_ARGS = [
     '--no-zygote',
     '--deterministic-fetch',
     '--disable-features=IsolateOrigins',
-    '--disable-site-isolation-trials',
-    '--proxy-server=http://127.0.0.1:3128'
+    '--disable-site-isolation-trials'
+#     '--proxy-server=http://127.0.0.1:3128'
 ]
+if os.environ.get('ALIBABA_PROXY'):
+    BROWSER_ARGS.append('--proxy-server=' + os.environ.get('ALIBABA_PROXY'))
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 # USER_AGENT = 'alibaba (+http://www.yourdomain.com)'
