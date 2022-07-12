@@ -256,7 +256,7 @@ class AlibabaCrawlerSpider(scrapy.Spider):
                         callback=self.parse_product_details,
                         wait_until=['domcontentloaded', 'networkidle0'],
                         wait_for={
-                            'selectorOrFunctionOrTimeout': 5000
+                            'selectorOrFunctionOrTimeout': 25000
                         }
                     )
 
