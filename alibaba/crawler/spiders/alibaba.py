@@ -15,13 +15,10 @@ import re
 import logging
 from transliterate.decorators import transliterate_function
 
-from pyppeteer.errors import TimeoutError as PyppeteerTimeoutError
 from ..alibaba_puppeteer import AlibabaPuppeteerRequest
 from ..items import AlibabaItem
-from ..settings import NEED_SECOND_PASS, MAX_ATTEMPTS
+from ..settings import NEED_SECOND_PASS
 from ...models import AlibabaProduct
-
-logging.getLogger("scrapy.core").setLevel(logging.DEBUG)
 
 
 @sync_to_async
@@ -104,8 +101,16 @@ class AlibabaCrawlerSpider(scrapy.Spider):
 
     def start_requests(self):
 
-        # pydevd_pycharm.settrace('127.0.0.1', port=12345, stdoutToServer=True, stderrToServer=True)
-        url = "https://russian.alibaba.com/trade/search?spm=a27aq.13929326.IndustryCategory.2.5219393b5O16XC&CateId=100000266&SearchText=%D0%A2%D0%BA%D0%B0%D0%BD%D0%B8&language=ru&indexArea=product_en"
+        # url = 'https://russian.alibaba.com/p-detail/High-1600352281746.html'
+        # yield AlibabaPuppeteerRequest(
+        #     url=get_clean_link(url),
+        #     callback=self.parse_product_details,
+        #     wait_until=['domcontentloaded', 'networkidle0'],
+        #     wait_for={
+        #         'selectorOrFunctionOrTimeout': '//div[@class="detail-subscribe"]/ol'
+        #     }
+        # )
+        url = "https://russian.alibaba.com/trade/search?spm=a27aq.13929326.IndustryCategory.2.5219393b5O16XC&CateId=100000266&SearchText=%D0%A2%D0%BA%D0%B0%D0%BD%D0%B8&language=ru&indexArea=product_en&page=42"
 
         yield AlibabaPuppeteerRequest(
             url=url,
@@ -256,7 +261,8 @@ class AlibabaCrawlerSpider(scrapy.Spider):
                         callback=self.parse_product_details,
                         wait_until=['domcontentloaded', 'networkidle0'],
                         wait_for={
-                            'selectorOrFunctionOrTimeout': 5000
+                            'selectorOrFunctionOrTimeout': '//div[@class="detail-subscribe"]/ol',
+                            'options': {'timeout': 60000}
                         }
                     )
 
@@ -279,16 +285,17 @@ class AlibabaCrawlerSpider(scrapy.Spider):
                 )
         else:
             if NEED_SECOND_PASS:
-                iterator = AlibabaProduct.objects.filter(not_found=True).iterator()
-                while True:
-                    try:
-                        product = await sync_to_async(next)(iterator)
-                        yield AlibabaPuppeteerRequest(
-                            url=product.url,
-                            callback=self.parse_product_details,
-                            wait_until=['domcontentloaded', 'networkidle2']
-                        )
-                    except StopIteration:
-                        break
+                products = await sync_to_async(list)(AlibabaProduct.objects.filter(not_found=True))
+                self.logger.info(f'Second pass for {len(products)} records')
+                for product in products:
+                    yield AlibabaPuppeteerRequest(
+                        url=product.url,
+                        callback=self.parse_product_details,
+                        wait_until=['domcontentloaded', 'networkidle0'],
+                        wait_for={
+                            'selectorOrFunctionOrTimeout': '//div[@class="detail-subscribe"]/ol',
+                            'options': {'timeout': 60000}
+                        }
+                    )
 
 
