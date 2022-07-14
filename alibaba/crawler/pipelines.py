@@ -38,6 +38,8 @@ class AlibabaPipeline(object):
             old_updated_fields = instance.fields_to_update or {}
             old_fields = old_updated_fields.keys()
             for field in item.keys():
+                if field == "product_description_html":
+                    continue
                 old = getattr(instance, field)
                 new = item[field]
                 if isinstance(new, dict):
