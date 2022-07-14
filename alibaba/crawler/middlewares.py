@@ -5,6 +5,7 @@
 # See documentation in:
 # https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 import asyncio
+from timeit import default_timer as timer
 
 from pyppeteer import launch
 from scrapy import signals
@@ -14,13 +15,14 @@ from scrapy_puppeteer import PuppeteerMiddleware
 from pyppeteer.errors import NetworkError, TimeoutError as PyppeteerTimeoutError
 
 from alibaba.models import AlibabaProduct
-from .settings import MAX_ATTEMPTS
+from .settings import MAX_ATTEMPTS, PAGE_LOAD_TIMEOUT
 
 
 class AlibabaRetryMiddleware(RetryMiddleware):
     def process_exception(self, request, exception, spider):
         if isinstance(exception, (PyppeteerTimeoutError, NetworkError)) and request.attempt <= MAX_ATTEMPTS:
             request.attempt += 1
+            spider.logger.warning(f'Timeout reached for {request.url}. Retry attempt {request.attempt}')
             return self._retry(request, exception, spider)
 
 
@@ -33,6 +35,7 @@ class AlibabaPuppeteerMiddleware(PuppeteerMiddleware):
         start_params = {
             'logLevel': crawler.settings.get('LOG_LEVEL'),
             'headless': True,
+            # 'autoClose': False
         }
         if args := crawler.settings.get('BROWSER_ARGS'):
             start_params.update({'args': args})
@@ -59,25 +62,64 @@ class AlibabaPuppeteerMiddleware(PuppeteerMiddleware):
 
         page = await self.browser.newPage()
 
+        # Cookies
+        # if isinstance(request.cookies, dict):
+        #     await page.setCookie(*[
+        #         {'name': k, 'value': v}
+        #         for k, v in request.cookies.items()
+        #     ])
+        # else:
+        #     await page.setCookie(request.cookies)
+
+        # # The headers must be set using request interception
+        # await page.setRequestInterception(True)
+        #
+        # @page.on('request')
+        # async def _handle_headers(pu_request):
+        #     overrides = {
+        #         'headers': {
+        #             k.decode(): ','.join(map(lambda v: v.decode(), v))
+        #             for k, v in request.headers.items()
+        #         }
+        #     }
+        #     await pu_request.continue_(overrides=overrides)
+
+        start = timer()
         response = await page.goto(
             request.url,
             {
-                'waitUntil': request.wait_until
+                'waitUntil': request.wait_until,
+                'timeout': PAGE_LOAD_TIMEOUT
             },
         )
+        spider.logger.info(f'Goto {request.url} took {timer() - start}')
 
+        start = timer()
         if request.scroll_page:
             await page.evaluate("""{window.scrollBy(0, document.body.scrollHeight);}""")
+        spider.logger.info(f'Scroll {request.url} took {timer() - start}')
 
+        start = timer()
         if request.wait_for:
-            await page.waitFor(**request.wait_for)
+            if isinstance(request.wait_for, list):
+                for wait_for in request.wait_for:
+                    await page.waitFor(**wait_for)
+            else:
+                await page.waitFor(**request.wait_for)
+        spider.logger.info(f'wait_for {request.url} took {timer() - start}')
 
         if request.screenshot:
             request.meta['screenshot'] = await page.screenshot()
 
+        start = timer()
         content = await page.content()
+        spider.logger.info(f'Get content {request.url} took {timer() - start}')
         body = str.encode(content)
+
+        await asyncio.sleep(5)
+        start = timer()
         await page.close()
+        spider.logger.info(f'Close {request.url} took {timer() - start}')
 
         # Necessary to bypass the compression middleware (?)
         response.headers.pop('content-encoding', None)
