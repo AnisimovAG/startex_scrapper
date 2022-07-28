@@ -97,8 +97,8 @@ DATABASES = {
         'NAME': 'postgres',
         'USER': 'postgres',
         'PASSWORD': 'postgres',
-        'HOST': '127.0.0.1',
-        'PORT': '5433',
+        'HOST': 'startex-db',
+        'PORT': '',
     }
 }
 
