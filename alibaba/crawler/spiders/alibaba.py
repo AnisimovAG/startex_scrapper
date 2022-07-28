@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import asyncio
+import encodings
 import sys
 from typing import Optional
 
@@ -46,6 +47,11 @@ def get_clean_link(link: str) -> str:
     return result
 
 
+class FirstDecimalNumber(Formatter):
+    def format(self, text: str) -> str:
+        numbers = re.findall(r'(?:[1-9]\d*|0)?(?:\.\d+)?', text.replace(',', '.'))
+        return [number for number in numbers if number][0]
+
 class PhotoLink(Formatter):
     def format(self, text: str) -> str:
         return re.search(r'.+(?=\_)', text).group(0)
@@ -82,7 +88,7 @@ class AlibabaCrawlerSpider(scrapy.Spider):
         os.path.join(os.path.dirname(__file__), "../resources/search_results.yml"))
     product_extractor = Extractor.from_yaml_file(
         os.path.join(os.path.dirname(__file__), "../resources/product_details.yml"),
-        formatters=[PhotoLink, VideoLink]
+        formatters=[PhotoLink, VideoLink, FirstDecimalNumber, Price]
     )
     color_div_extractor = Extractor.from_yaml_file(
         os.path.join(os.path.dirname(__file__), "../resources/color_div.yml"))
@@ -101,15 +107,6 @@ class AlibabaCrawlerSpider(scrapy.Spider):
 
     def start_requests(self):
 
-        # url = 'https://russian.alibaba.com/p-detail/High-1600352281746.html'
-        # yield AlibabaPuppeteerRequest(
-        #     url=get_clean_link(url),
-        #     callback=self.parse_product_details,
-        #     wait_until=['domcontentloaded', 'networkidle0'],
-        #     wait_for={
-        #         'selectorOrFunctionOrTimeout': '//div[@class="detail-subscribe"]/ol'
-        #     }
-        # )
         url = "https://russian.alibaba.com/trade/search?spm=a27aq.13929326.IndustryCategory.2.5219393b5O16XC&CateId=100000266&SearchText=%D0%A2%D0%BA%D0%B0%D0%BD%D0%B8&language=ru&indexArea=product_en&page=42"
 
         yield AlibabaPuppeteerRequest(
@@ -143,26 +140,33 @@ class AlibabaCrawlerSpider(scrapy.Spider):
             product['video'] = data['video']
             product['supplier_name'] = data['supplier_name']
             product['supplier_url'] = data['supplier_url']
-            product['category'] = '/'.join(data['category']['hierarchy'])
+            category = data['category'] or data['category_alt']
+            product['category'] = '/'.join(category['hierarchy'])
 
             try:
-                if '<li data-role="ladder-price-item"' in data['prices']:
-                    prices = self.price_li_extractor.extract(data['prices'])
-                    prices_dict = {f'price_{idx + 1}': i['price'] for idx, i in enumerate(prices['prices'])}
+                if data['prices_product_price']:
+                    prices = data['prices_product_price']
+                    prices_dict = {f'price_{idx + 1}': i for idx, i in enumerate(prices['prices'])}
                     prices_dict.update(
-                        {f'threshold_{idx + 1}': i['threshold'] for idx, i in enumerate(prices['prices'])})
+                        {f'threshold_{idx + 1}': i for idx, i in enumerate(prices['prices'])})
                 else:
-                    prices = self.price_cpan_extractor.extract(data['prices'])
-                    price2, price1 = Price.get_two_prices(prices['price'])
-                    if price1:
-                        prices_dict = {
-                            'price_1': price1,
-                            'threshold_1': f'<{prices["threshold"]}',
-                            'price_2': price2,
-                            'threshold_2': f'>={prices["threshold"]}',
-                        }
+                    if '<li data-role="ladder-price-item"' in data['prices']:
+                        prices = self.price_li_extractor.extract(data['prices'])
+                        prices_dict = {f'price_{idx + 1}': i['price'] for idx, i in enumerate(prices['prices'])}
+                        prices_dict.update(
+                            {f'threshold_{idx + 1}': i['threshold'] for idx, i in enumerate(prices['prices'])})
                     else:
-                        prices_dict = {'price_1': price2}
+                        prices = self.price_cpan_extractor.extract(data['prices'])
+                        price2, price1 = Price.get_two_prices(prices['price'])
+                        if price1:
+                            prices_dict = {
+                                'price_1': price1,
+                                'threshold_1': f'<{prices["threshold"]}',
+                                'price_2': price2,
+                                'threshold_2': f'>={prices["threshold"]}',
+                            }
+                        else:
+                            prices_dict = {'price_1': price2}
                 product['prices'] = prices_dict
             except Exception as error:
                 self.logger.error(f'Ошибка разбора цен в {response.url}')
@@ -260,10 +264,6 @@ class AlibabaCrawlerSpider(scrapy.Spider):
                         url=get_clean_link(product['link']),
                         callback=self.parse_product_details,
                         wait_until=['domcontentloaded', 'networkidle0'],
-                        wait_for={
-                            'selectorOrFunctionOrTimeout': '//div[@class="detail-subscribe"]/ol',
-                            'options': {'timeout': 60000}
-                        }
                     )
 
             # Try paginating if there is data
@@ -292,10 +292,6 @@ class AlibabaCrawlerSpider(scrapy.Spider):
                         url=product.url,
                         callback=self.parse_product_details,
                         wait_until=['domcontentloaded', 'networkidle0'],
-                        wait_for={
-                            'selectorOrFunctionOrTimeout': '//div[@class="detail-subscribe"]/ol',
-                            'options': {'timeout': 60000}
-                        }
                     )
 
 

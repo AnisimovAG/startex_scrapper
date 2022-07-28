@@ -1,15 +1,34 @@
 name:
-    css: h1.module-pdp-title
-    xpath: null
+    css: null
+    xpath: .//div[@class="product-title"]/h1
     type: Text
 id:
-    css: 'div[id="detail-favorite-mark"]::attr("data-fav-id")'
-    xpath: null
+    css: null
+    xpath: >-
+        .//div[@id="detail-favorite-mark"]/@data-fav-id |
+        .//div[@id="prodict-favorite"]/@data-fav-id
     type: HTML
 prices:
     css: null
     xpath: './/div[@id="module_price"]'
     type: HTML
+prices_product_price:
+    css: null
+    xpath: './/div[@class="product-price"]'
+    type: HTML
+    children:
+        thresholds:
+            css: null
+            xpath: './div[@class="price-item"]/div[@class="quality"]'
+            multiple: true
+            type: Text
+            format: FirstDecimalNumber
+        prices:
+            css: null
+            xpath: './div[@class="price-item"]/div[@class="price"]'
+            multiple: true
+            type: Text
+            format: FirstDecimalNumber
 min_order_txt:
     css: 'div[class="item-tips"]'
     xpath: null
@@ -18,8 +37,8 @@ colors:
     css: null
     xpath: >-
         .//div[@id="module_sku"]//dd[@class="sku-attr-val value util-clearfix"]/*[@data-role="sku-attr-val"] |
-        .//div[@id="module_sku"]//div[@class="sku-item" and ./label/text()="Цвет"]/div[contains(@class, "item-size")]/a |
-        .//div[@id="module_sku"]//div[@class="sku-item" and ./label/text()="Color"]/div[contains(@class, "item-size")]/a
+        .//div[contains(@class, "sku-item") and ./label/text()="Цвет"]/div[contains(@class, "item-size")]/a |
+        .//div[contains(@class, "sku-item") and ./label/text()="Color"]/div[contains(@class, "item-size")]/a
     multiple: true
     type: HTML
 video:
@@ -29,13 +48,17 @@ video:
     type: HTML
 photos:
     css: null
-    xpath: './/li[contains(@class, "main-image-thumb-item")]/img/@src'
+    xpath: >- 
+        .//li[contains(@class, "main-image-thumb-item")]/img/@src |
+        .//div[@class="main-list"]/div[contains(@class, "main-item")]/img/@src
     multiple: true
     format: PhotoLink
     type: HTML
 production:
     css: null
-    xpath: './/div[@id="module_market_action"]//table[contains(@class, "supply-ability-table")]'
+    xpath: >- 
+        .//div[@id="module_market_action"]//table[contains(@class, "supply-ability-table")] |
+        .//div[@class="lead-list"]/table
     type: HTML
     children:
         thresholds:
@@ -50,12 +73,16 @@ production:
             type: Text
 supplier_url:
     css: null
-    xpath: './/a[@class="company-name company-name-lite-vb"]/@href'
+    xpath: >-
+        .//a[@class="company-name company-name-lite-vb"]/@href |
+        .//div[@class="company-card is-gs"]/div[@class="company-head"]/div[@class="company-item"]/a/@href
     type: HTML
 supplier_name:
     css: null
-    xpath: './/a[@class="company-name company-name-lite-vb"]/@title'
-    type: HTML
+    xpath: >- 
+        .//a[@class="company-name company-name-lite-vb"]/@title |
+        .//div[@class="company-card is-gs"]/div[@class="company-head"]/div[@class="company-item"]/a
+    type: Text
 product_description1:
     css: null
     xpath: './/div[@id="detail_decorate_root"]'
@@ -100,5 +127,15 @@ category:
         hierarchy:
             css: null
             xpath: './li/a/span'
+            type: Text
+            multiple: true
+category_alt:
+    css: null
+    xpath: './/div[@class="breadcrumb-layout"]//ul'
+    type: HTML
+    children:
+        hierarchy:
+            css: null
+            xpath: './li/a'
             type: Text
             multiple: true
