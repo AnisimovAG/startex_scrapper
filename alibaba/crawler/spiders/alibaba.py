@@ -10,6 +10,7 @@ import requests
 from asgiref.sync import sync_to_async
 import os
 
+from requests import RequestException
 from selectorlib import Extractor, Formatter
 
 import re
@@ -111,18 +112,7 @@ class AlibabaCrawlerSpider(scrapy.Spider):
 
     def start_requests(self):
 
-        # url = 'https://russian.alibaba.com/p-detail/Super-1600539409086.html'
-        # yield AlibabaPuppeteerRequest(
-        #     url=get_clean_link(url),
-        #     callback=self.parse_product_details,
-        #     wait_until=['domcontentloaded'],
-        #     wait_for={
-        #         'selectorOrFunctionOrTimeout': '//iframe[@src="https://onetalk.alibaba.com/message/weblite.htm"]',
-        #         'options': {'timeout': 60000}
-        #     }
-        # )
-
-        url = "https://russian.alibaba.com/trade/search?spm=a27aq.13929326.IndustryCategory.2.5219393b5O16XC&CateId=100000266&SearchText=%D0%A2%D0%BA%D0%B0%D0%BD%D0%B8&language=ru&indexArea=product_en&page=42"
+        url = "https://russian.alibaba.com/trade/search?spm=a27aq.13929326.IndustryCategory.2.5219393b5O16XC&CateId=100000266&SearchText=%D0%A2%D0%BA%D0%B0%D0%BD%D0%B8&language=ru&indexArea=product_en&viewtype=L"
 
         yield AlibabaPuppeteerRequest(
             url=url,
@@ -177,10 +167,8 @@ class AlibabaCrawlerSpider(scrapy.Spider):
                     else:
                         prices_dict = {f'price_{idx + 1}': i for idx, i in enumerate(prices['prices'])}
                         prices_dict.update(
-                            {f'threshold_{idx + 1}': i for idx, i in enumerate(prices['prices'])})
-                # TODO: проконтролировать что таких больше нет и удалить этот кусок и в product_details.yml тоже
+                            {f'threshold_{idx + 1}': i for idx, i in enumerate(prices['thresholds'])})
                 else:
-                    self.logger.info(f'Old webpage scheme. {response.url}')
                     if '<li data-role="ladder-price-item"' in data['prices']:
                         prices = self.price_li_extractor.extract(data['prices'])
                         prices_dict = {f'price_{idx + 1}': i['price'] for idx, i in enumerate(prices['prices'])}
@@ -245,16 +233,16 @@ class AlibabaCrawlerSpider(scrapy.Spider):
                     )
                 else:
                     product['production'] = None
-            except Exception as error:
+            except RequestException as error:
                 self.logger.error(f'Ошибка разбора сроков изготовления в {response.url}')
                 self.logger(error.with_traceback(sys.exc_info()[2]))
                 product['production'] = None
 
             try:
+                response_english = requests.get(url_english)
                 english = {item['attrNameId']: item['attrName'] for item in filter(lambda x: x.get('attrNameId'),
                                                                                    loads(
-                                                                                       requests.get(
-                                                                                           url_english).text.split(
+                                                                                       response_english.text.split(
                                                                                            '"productBasicProperties":')[
                                                                                            1].split(']')[0] + ']'))}
             except Exception as error:
@@ -291,13 +279,14 @@ class AlibabaCrawlerSpider(scrapy.Spider):
         if data['products']:
             for product in data['products']:
                 if product['link']:  # Может быть реклама, там линка нет
+                    self.tasks_in_progress += 1
+                    self.logger.info(f'Yield {product["link"]}. In_progress {self.tasks_in_progress}')
                     yield AlibabaPuppeteerRequest(
                         url=get_clean_link(product['link']),
                         callback=self.parse_product_details,
                         wait_until=['domcontentloaded'],
                         wait_for={
-                            'selectorOrFunctionOrTimeout': '//div[@class="product-title"]/h1',#  '//iframe[@class="weblite-iframe" and @data-spm-anchor-id]',
-                            'options': {'timeout': 60000}
+                            'selectorOrFunctionOrTimeout': 20000
                         }
                     )
 
@@ -319,6 +308,8 @@ class AlibabaCrawlerSpider(scrapy.Spider):
                     }
                 )
         else:
+            while self.crawler.engine.slot.scheduler.has_pending_requests():
+                await asyncio.sleep(600)
             if NEED_SECOND_PASS:
                 products = await sync_to_async(list)(AlibabaProduct.objects.filter(not_found=True))
                 self.logger.info(f'Second pass for {len(products)} records')
@@ -327,4 +318,7 @@ class AlibabaCrawlerSpider(scrapy.Spider):
                         url=product.url,
                         callback=self.parse_product_details,
                         wait_until=['domcontentloaded', 'networkidle0'],
+                        wait_for={
+                            'selectorOrFunctionOrTimeout': 20000
+                        }
                     )
