@@ -2,7 +2,7 @@
 import asyncio
 import encodings
 import sys
-from typing import Optional
+from typing import Optional, Union
 
 import scrapy
 from json import loads
@@ -52,9 +52,13 @@ class FirstDecimalNumber(Formatter):
         numbers = re.findall(r'(?:[1-9]\d*|0)?(?:\.\d+)?', text.replace(',', '.'))
         return [number for number in numbers if number][0]
 
+
 class PhotoLink(Formatter):
     def format(self, text: str) -> str:
-        return re.search(r'.+(?=\_)', text).group(0)
+        try:
+            return re.search(r'.+(?=\_)', text).group(0)
+        except AttributeError:
+            return text
 
 
 class Price(Formatter):
@@ -66,10 +70,10 @@ class Price(Formatter):
         return None
 
     @staticmethod
-    def get_two_prices(text: str) -> Optional[str]:
+    def get_two_prices(text: str) -> Optional[tuple]:
         text = text.replace(',', '.')
         price = re.findall(r'\d+\.\d+', text)
-        if len(price) > 0:
+        if price:
             return price[0], price[1] if len(price) > 1 else None
         return None
 
@@ -106,6 +110,17 @@ class AlibabaCrawlerSpider(scrapy.Spider):
     max_pages = 0
 
     def start_requests(self):
+
+        # url = 'https://russian.alibaba.com/p-detail/Super-1600539409086.html'
+        # yield AlibabaPuppeteerRequest(
+        #     url=get_clean_link(url),
+        #     callback=self.parse_product_details,
+        #     wait_until=['domcontentloaded'],
+        #     wait_for={
+        #         'selectorOrFunctionOrTimeout': '//iframe[@src="https://onetalk.alibaba.com/message/weblite.htm"]',
+        #         'options': {'timeout': 60000}
+        #     }
+        # )
 
         url = "https://russian.alibaba.com/trade/search?spm=a27aq.13929326.IndustryCategory.2.5219393b5O16XC&CateId=100000266&SearchText=%D0%A2%D0%BA%D0%B0%D0%BD%D0%B8&language=ru&indexArea=product_en&page=42"
 
@@ -146,10 +161,26 @@ class AlibabaCrawlerSpider(scrapy.Spider):
             try:
                 if data['prices_product_price']:
                     prices = data['prices_product_price']
-                    prices_dict = {f'price_{idx + 1}': i for idx, i in enumerate(prices['prices'])}
-                    prices_dict.update(
-                        {f'threshold_{idx + 1}': i for idx, i in enumerate(prices['prices'])})
+                    if prices.get('prices_range'):
+                        price2, price1 = Price.get_two_prices(prices['prices_range'])
+                        if price1:
+                            prices_dict = {
+                                'price_1': price1,
+                                'threshold_1': f'<{prices["thresholds_range"]}',
+                                'price_2': price2,
+                                'threshold_2': f'>={prices["thresholds_range"]}',
+                            }
+                        else:
+                            prices_dict = {'price_1': price2}
+                            if prices["thresholds_range"]:
+                                prices_dict.update({'threshold_1': f'>={prices["thresholds_range"]}'})
+                    else:
+                        prices_dict = {f'price_{idx + 1}': i for idx, i in enumerate(prices['prices'])}
+                        prices_dict.update(
+                            {f'threshold_{idx + 1}': i for idx, i in enumerate(prices['prices'])})
+                # TODO: проконтролировать что таких больше нет и удалить этот кусок и в product_details.yml тоже
                 else:
+                    self.logger.info(f'Old webpage scheme. {response.url}')
                     if '<li data-role="ladder-price-item"' in data['prices']:
                         prices = self.price_li_extractor.extract(data['prices'])
                         prices_dict = {f'price_{idx + 1}': i['price'] for idx, i in enumerate(prices['prices'])}
@@ -263,7 +294,11 @@ class AlibabaCrawlerSpider(scrapy.Spider):
                     yield AlibabaPuppeteerRequest(
                         url=get_clean_link(product['link']),
                         callback=self.parse_product_details,
-                        wait_until=['domcontentloaded', 'networkidle0'],
+                        wait_until=['domcontentloaded'],
+                        wait_for={
+                            'selectorOrFunctionOrTimeout': '//div[@class="product-title"]/h1',#  '//iframe[@class="weblite-iframe" and @data-spm-anchor-id]',
+                            'options': {'timeout': 60000}
+                        }
                     )
 
             # Try paginating if there is data
@@ -293,5 +328,3 @@ class AlibabaCrawlerSpider(scrapy.Spider):
                         callback=self.parse_product_details,
                         wait_until=['domcontentloaded', 'networkidle0'],
                     )
-
-

@@ -29,6 +29,19 @@ prices_product_price:
             multiple: true
             type: Text
             format: FirstDecimalNumber
+        prices_range:
+            css: null
+            xpath: >- 
+                ./div[@class="price-range"]/span[@class="price" or @class="promotion"] |
+                ./div[@class="promotion-price"]/strong
+            type: Text
+        thresholds_range:
+            css: null
+            xpath: >- 
+                ./div[@class="price-range"]/span[@class="moq"] |
+                ./div[@class="promotion-price"]/span[@class="promotion-moq"]
+            type: Text
+            format: FirstDecimalNumber
 min_order_txt:
     css: 'div[class="item-tips"]'
     xpath: null
