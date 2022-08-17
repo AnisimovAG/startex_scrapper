@@ -1,6 +1,8 @@
 name:
     css: null
-    xpath: .//div[@class="product-title"]/h1
+    xpath: >-
+        .//div[@class="product-title"]/h1 |
+        .//div[contains(@class, "detail-title-section")]
     type: Text
 id:
     css: null
