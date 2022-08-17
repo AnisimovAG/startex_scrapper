@@ -279,8 +279,6 @@ class AlibabaCrawlerSpider(scrapy.Spider):
         if data['products']:
             for product in data['products']:
                 if product['link']:  # Может быть реклама, там линка нет
-                    self.tasks_in_progress += 1
-                    self.logger.info(f'Yield {product["link"]}. In_progress {self.tasks_in_progress}')
                     yield AlibabaPuppeteerRequest(
                         url=get_clean_link(product['link']),
                         callback=self.parse_product_details,
