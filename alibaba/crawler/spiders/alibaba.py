@@ -19,7 +19,7 @@ from transliterate.decorators import transliterate_function
 
 from ..alibaba_puppeteer import AlibabaPuppeteerRequest
 from ..items import AlibabaItem
-from ..settings import NEED_SECOND_PASS
+from ..settings import NEED_SECOND_PASS, BROWSER_RENDER_PAGE_WAIT
 from ...models import AlibabaProduct
 
 
@@ -111,16 +111,6 @@ class AlibabaCrawlerSpider(scrapy.Spider):
     max_pages = 0
 
     def start_requests(self):
-
-        # url = 'https://russian.alibaba.com/p-detail/9.7OZ-1600309558334.html'
-        # yield AlibabaPuppeteerRequest(
-        #     url=url,
-        #     callback=self.parse_product_details,
-        #     wait_until=['domcontentloaded'],
-        #     wait_for={
-        #         'selectorOrFunctionOrTimeout': 20000
-        #     }
-        # )
 
         url = "https://russian.alibaba.com/trade/search?spm=a27aq.13929326.IndustryCategory.2.5219393b5O16XC&CateId=100000266&SearchText=%D0%A2%D0%BA%D0%B0%D0%BD%D0%B8&language=ru&indexArea=product_en&viewtype=L"
 
@@ -294,7 +284,7 @@ class AlibabaCrawlerSpider(scrapy.Spider):
                         callback=self.parse_product_details,
                         wait_until=['domcontentloaded'],
                         wait_for={
-                            'selectorOrFunctionOrTimeout': 20000
+                            'selectorOrFunctionOrTimeout': BROWSER_RENDER_PAGE_WAIT
                         }
                     )
 
@@ -319,14 +309,15 @@ class AlibabaCrawlerSpider(scrapy.Spider):
             while self.crawler.engine.slot.scheduler.has_pending_requests():
                 await asyncio.sleep(600)
             if NEED_SECOND_PASS:
-                products = await sync_to_async(list)(AlibabaProduct.objects.filter(not_found=True))
+                products = await sync_to_async(list)(
+                    AlibabaProduct.objects.filter(not_found=True).values_list('url', flat=True))
                 self.logger.info(f'Second pass for {len(products)} records')
                 for product in products:
                     yield AlibabaPuppeteerRequest(
-                        url=product.url,
+                        url=product,
                         callback=self.parse_product_details,
                         wait_until=['domcontentloaded'],
                         wait_for={
-                            'selectorOrFunctionOrTimeout': 20000
+                            'selectorOrFunctionOrTimeout': BROWSER_RENDER_PAGE_WAIT
                         }
                     )

@@ -92,13 +92,15 @@ supplier_url:
     css: null
     xpath: >-
         .//a[@class="company-name company-name-lite-vb"]/@href |
-        .//div[@class="company-card is-gs"]/div[@class="company-head"]/div[@class="company-item"]/a/@href
+        .//div[@class="company-card is-gs"]/div[@class="company-head"]/div[@class="company-item"]/a/@href |
+        .//div[@class="company-item"]/a/@href
     type: HTML
 supplier_name:
     css: null
     xpath: >- 
-        .//a[@class="company-name company-name-lite-vb"]/@title |
-        .//div[@class="company-card is-gs"]/div[@class="company-head"]/div[@class="company-item"]/a
+        .//a[@class="company-name company-name-lite-vb"] |
+        .//div[@class="company-card is-gs"]/div[@class="company-head"]/div[@class="company-item"]/a |
+        .//div[@class="company-item"]/a
     type: Text
 product_description1:
     css: null
