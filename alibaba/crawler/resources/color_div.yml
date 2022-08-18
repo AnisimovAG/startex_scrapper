@@ -1,6 +1,8 @@
 name:
     css: null
-    xpath: './/span[@class="sku-attr-val-frame picture-frame"]/@title'
+    xpath: >- 
+        .//span[@class="sku-attr-val-frame picture-frame"]/@title |
+        .//span[@class="txt"]/text()
     type: HTML
 photo:
     css: null

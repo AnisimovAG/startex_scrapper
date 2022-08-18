@@ -112,6 +112,16 @@ class AlibabaCrawlerSpider(scrapy.Spider):
 
     def start_requests(self):
 
+        # url = 'https://russian.alibaba.com/p-detail/9.7OZ-1600309558334.html'
+        # yield AlibabaPuppeteerRequest(
+        #     url=url,
+        #     callback=self.parse_product_details,
+        #     wait_until=['domcontentloaded'],
+        #     wait_for={
+        #         'selectorOrFunctionOrTimeout': 20000
+        #     }
+        # )
+
         url = "https://russian.alibaba.com/trade/search?spm=a27aq.13929326.IndustryCategory.2.5219393b5O16XC&CateId=100000266&SearchText=%D0%A2%D0%BA%D0%B0%D0%BD%D0%B8&language=ru&indexArea=product_en&viewtype=L"
 
         yield AlibabaPuppeteerRequest(
@@ -315,7 +325,7 @@ class AlibabaCrawlerSpider(scrapy.Spider):
                     yield AlibabaPuppeteerRequest(
                         url=product.url,
                         callback=self.parse_product_details,
-                        wait_until=['domcontentloaded', 'networkidle0'],
+                        wait_until=['domcontentloaded'],
                         wait_for={
                             'selectorOrFunctionOrTimeout': 20000
                         }

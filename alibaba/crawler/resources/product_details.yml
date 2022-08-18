@@ -53,7 +53,9 @@ colors:
     xpath: >-
         .//div[@id="module_sku"]//dd[@class="sku-attr-val value util-clearfix"]/*[@data-role="sku-attr-val"] |
         .//div[contains(@class, "sku-item") and ./label/text()="Цвет"]/div[contains(@class, "item-size")]/a |
-        .//div[contains(@class, "sku-item") and ./label/text()="Color"]/div[contains(@class, "item-size")]/a
+        .//div[contains(@class, "sku-item") and ./label/text()="Color"]/div[contains(@class, "item-size")]/a |
+        .//div[contains(@class, "sku-item") and ./label/text()="Цвет"]/div[contains(@class, "item-size")]//div[@class="sku-option"] |
+        .//div[contains(@class, "sku-item") and ./label/text()="Color"]/div[contains(@class, "item-size")]//div[@class="sku-option"]
     multiple: true
     type: HTML
 video:
