@@ -192,7 +192,7 @@ class AlibabaCrawlerSpider(scrapy.Spider):
                 product['prices'] = prices_dict
             except Exception as error:
                 self.logger.error(f'Ошибка разбора цен в {response.url}')
-                self.logger(error.with_traceback(sys.exc_info()[2]))
+                self.logger.error(error.with_traceback(sys.exc_info()[2]))
                 product['prices'] = None
 
             try:

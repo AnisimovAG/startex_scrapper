@@ -20,7 +20,7 @@ prices:
     type: HTML
 prices_product_price:
     css: null
-    xpath: './/div[@class="product-price"]'
+    xpath: './/div[contains(@class, "product-price")]'
     type: HTML
     children:
         thresholds:
