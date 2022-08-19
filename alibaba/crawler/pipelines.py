@@ -76,6 +76,7 @@ class AlibabaPipeline(object):
                     fields.append('not_found')
             else:
                 fields = ['not_found']
+            fields.append('date_updated')
             await sync_to_async(instance.save)(update_fields=fields)
         except AlibabaProduct.DoesNotExist:
             await sync_to_async(AlibabaProduct.objects.create)(**item)

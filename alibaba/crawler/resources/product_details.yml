@@ -1,3 +1,7 @@
+not_available:
+    css: null
+    xpath: './/div[@class="available-title"]/span[text()="Этот продукт больше не доступен."]'
+    type: Text
 name:
     css: null
     xpath: >-

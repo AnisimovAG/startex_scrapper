@@ -127,8 +127,11 @@ class AlibabaCrawlerSpider(scrapy.Spider):
     def parse_product_details(self, response):
 
         if response.status == 200:
-            url_english = f'https:{response.text.split("english=")[1].split(",")[0]}'
             data = self.product_extractor.extract(response.text, base_url=response.url)
+            if data['not_available']:
+                self.logger.info(f'{response.url} более не доступен')
+                return
+            url_english = f'https:{response.text.split("english=")[1].split(",")[0]}'
             product = AlibabaItem()
             product['id'] = data['id']
             product['sku'] = data['id']
