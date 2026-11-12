@@ -23,7 +23,7 @@ scrapy crawl alibaba
 ```
 
 ## How to install
-git clone https://gitlab.star-tex.ru/startex/site.git
+git clone https://github.com/AnisimovAG/startex_scrapper.git
 
 cd site/scraper
 
